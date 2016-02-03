@@ -18,7 +18,7 @@
 
 package debugger;
 
-import cpp.vm.Debugger;
+import cpp.vm.Debugger; //Might have to look at this file to modify for columns
 import debugger.IController;
 import haxe.CallStack;
 
@@ -177,7 +177,7 @@ class DebuggerThread
 
                 case SetCurrentThread(number):
                     emit(this.setCurrentThread(number));
-
+                // CS116 Modify to include column
                 case AddFileLineBreakpoint(fileName, lineNumber):
                     emit(this.addFileLineBreakpoint(fileName, lineNumber));
 
@@ -1146,6 +1146,7 @@ class DebuggerThread
         return sorted.iterator();
     }
 
+    // CS116
     private function stepExecution(count : Int, type : Int) : Message
     {
         if (count < 1) {
