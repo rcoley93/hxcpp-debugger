@@ -84,7 +84,7 @@ class DebuggerThread
         mCurrentThreadInfo = null;
         mBreakpoints = new haxe.ds.IntMap<Breakpoint>();
         mBreakpointsByDescription = new haxe.ds.StringMap<Breakpoint>();
-        mNextBreakpointNumber = 1;
+        mNextBreakpointNumber = 1; // CS116
         mDebuggerVariables = new DebuggerVariables();
 
         // Set gStartStopped so that the debugger thread will know whether to
@@ -141,6 +141,7 @@ class DebuggerThread
             gStartQueue.push(true);
         }
 
+        // CS116 all commands come through here
         // Now run the main loop
         try {
             while (true) {
@@ -275,6 +276,7 @@ class DebuggerThread
         gStarted = false;
     }
 
+    // CS116 has linenumber might need to edit
     private function handleThreadEvent(threadNumber : Int, event : Int,
                                        stackFrame : Int,
                                        className : String,
@@ -363,7 +365,7 @@ class DebuggerThread
         var initial_to_skip = to_skip;
         var total = 0;
         var byte_total = 0;
-        
+
         // Accumulate classes to show
         var classes_to_use = new Array<String>();
 
@@ -389,7 +391,7 @@ class DebuggerThread
                 return Reflect.compare(b, a);
             });
 
-        var list : ClassList = ((continuation == null) ? 
+        var list : ClassList = ((continuation == null) ?
                                 Terminator : Continued(continuation));
 
         for (f in classes_to_use) {
@@ -462,6 +464,7 @@ class DebuggerThread
         return ErrorNoSuchThread(number);
     }
 
+    // CS116
     private function addFileLineBreakpoint(fileName : String,
                                            lineNumber : Int) : Message
     {
@@ -733,6 +736,7 @@ class DebuggerThread
         return deleteBreakpoints(getBreakpointIds(first, last));
     }
 
+    // CS116
     private function deleteFileLineBreakpoint(fileName : String,
                                               lineNumber : Int) : Message
     {
@@ -788,16 +792,19 @@ class DebuggerThread
         return OK;
     }
 
+    // CS116
     private function step(count) : Message
     {
         return this.stepExecution(count, Debugger.STEP_INTO);
     }
 
+    // CS116
     private function next(count) : Message
     {
         return this.stepExecution(count, Debugger.STEP_OVER);
     }
 
+    // CS116
     private function finish(count) : Message
     {
         return this.stepExecution(count, Debugger.STEP_OUT);
@@ -880,6 +887,7 @@ class DebuggerThread
         return Where(threadInfo.number, threadStatus, list, next);
     }
 
+    // CS116
     private function up(count : Int) : Message
     {
         if (count < 0) {
@@ -911,6 +919,7 @@ class DebuggerThread
                               frame.fileName, frame.lineNumber);
     }
 
+    // CS116
     private function down(count : Int) : Message
     {
         if (count < 0) {
@@ -944,6 +953,7 @@ class DebuggerThread
                               frame.fileName, frame.lineNumber);
     }
 
+    // CS116
     private function setFrame(number : Int) : Message
     {
         mStateMutex.acquire();
@@ -1081,11 +1091,11 @@ class DebuggerThread
             }
         }
     }
-    
+
     private function getStructured(unsafe : Bool, expression : String) : Message
     {
         mStateMutex.acquire();
-        
+
         // Just to ensure that the current stack frame is known
         this.getCurrentThreadInfoLocked();
 
@@ -1143,7 +1153,7 @@ class DebuggerThread
         }
 
         Debugger.stepThread(mCurrentThreadNumber, type, count);
-        
+
         return OK;
     }
 
@@ -1300,7 +1310,7 @@ private class TypeHelpers
                 ret += "\n";
             }
             return ret + indent + "}";
-            
+
         case TClass(Array):
             var arr : Array<Dynamic> = cast value;
             if (arr.length == 0) {
@@ -1542,12 +1552,12 @@ private class TypeHelpers
             if (elideArraysAndObjects) {
                 return Elided(getStructuredValueType(value), expression);
             }
-            return List(Anonymous, 
+            return List(Anonymous,
                         getStructuredValueList(value, expression));
 
         case TClass(String):
             return Single(TypeClass("String"), Std.string(value));
-            
+
         case TClass(Array):
             if (elideArraysAndObjects) {
                 return Elided(TypeArray, expression);
