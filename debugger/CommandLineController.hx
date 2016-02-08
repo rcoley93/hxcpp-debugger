@@ -8,7 +8,7 @@
  * You may obtain a copy of the License at
  *
  *     http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -79,7 +79,7 @@ class CommandLineController implements IController
             var commandLine = null;
 
             try {
-                commandLine = StringTools.trim(carriedCommandLine + 
+                commandLine = StringTools.trim(carriedCommandLine +
                                                input.readLine());
                 carriedCommandLine = "";
             }
@@ -103,9 +103,9 @@ class CommandLineController implements IController
             // just append it to the carriedCommandLine.  This is to assist
             // when program or thread event output has confused the user and
             // they wish to continue the command in progress.
-            
+
             if (StringTools.endsWith(commandLine, "\\")) {
-                carriedCommandLine = 
+                carriedCommandLine =
                     commandLine.substr(0, commandLine.length - 1);
                 continue;
             }
@@ -148,7 +148,7 @@ class CommandLineController implements IController
 
             // If it's a bang command, replace it with the stored command
             if (charZero == "!") {
-                var number = 
+                var number =
                     Std.parseInt(StringTools.trim(commandLine.substr(1)));
                 if ((number <= 0) || (number >= mStoredCommands.length)) {
                     Sys.println("No command " + number + " in history.");
@@ -175,7 +175,7 @@ class CommandLineController implements IController
             }
 
             if (!matched) {
-                Sys.println("Invalid command.");
+                Sys.println("Invalid command./178");
                 continue;
             }
 
@@ -218,7 +218,7 @@ class CommandLineController implements IController
 
         case ErrorNoMatchingFunctions(className, functionName,
                                       unresolvableClasses):
-            Sys.println("No functions matching " + className + "." + 
+            Sys.println("No functions matching " + className + "." +
                         functionName + ".");
             printUnresolvableClasses(unresolvableClasses);
 
@@ -234,13 +234,13 @@ class CommandLineController implements IController
         case OK:
             // This message is just sent as a way to say that commands that
             // don't have any status were received
-            
+
         case Exited:
             Sys.println("Debugged process has exited.");
 
         case Detached:
             Sys.println("Debugged process has detached.");
-            
+
         case Files(list):
             printStringList(list, "\n");
             Sys.println("");
@@ -248,7 +248,7 @@ class CommandLineController implements IController
         case AllClasses(list):
             printStringList(list, "\n");
             Sys.println("");
-            
+
         case Classes(list):
             // The command line controller never issues a request that should
             // have a Classes response, instead it asks for AllClasses
@@ -266,21 +266,21 @@ class CommandLineController implements IController
             Sys.println(bytesAfter + " bytes used after collection.");
 
         case ThreadLocation(number, frameNumber, className, functionName,
-                            fileName, lineNumber):
+                            fileName, lineNumber, columnNumber):
             Sys.println("*     " + frameNumber + " : " +
                         className + "." + functionName + "() at " +
-                        fileName + ":" + lineNumber);
-            
+                        fileName + ":" + lineNumber + ": " + columnNumber);
+
         case FileLineBreakpointNumber(number):
             Sys.println("Breakpoint " + number + " set and enabled.");
 
         case ClassFunctionBreakpointNumber(number, unresolvableClasses):
             Sys.println("Breakpoint " + number + " set and enabled.");
             printUnresolvableClasses(unresolvableClasses);
-            
+
         case Breakpoints(Terminator):
             Sys.println("No breakpoints.");
-            
+
         case Breakpoints(list):
             Sys.println("Number | E/d | M | Description");
             while (true) {
@@ -288,7 +288,7 @@ class CommandLineController implements IController
                 case Terminator:
                     break;
                 case Breakpoint(number, description, enabled, multi, next):
-                    Sys.println(padString(Std.string(number), 9) + 
+                    Sys.println(padString(Std.string(number), 9) +
                                 (enabled ? "E     " : "  d   ") +
                                 (multi ? "*   " : "    ") + description);
                     list = next;
@@ -305,8 +305,8 @@ class CommandLineController implements IController
                 switch (list) {
                 case Terminator:
                     break;
-                case FileLine(fileName, lineNumber, next):
-                    Sys.println("    Breaks at " + fileName + ":" + 
+                case FileLine(fileName, lineNumber, columnNumber, next):
+                    Sys.println("    Breaks at " + fileName + ":" +
                                 lineNumber + ".");
                     list = next;
                 case ClassFunction(className, functionName, next):
@@ -318,7 +318,7 @@ class CommandLineController implements IController
 
         case BreakpointStatuses(Terminator):
             Sys.println("No breakpoints affected.");
-            
+
         case BreakpointStatuses(list):
             while (true) {
                 switch (list) {
@@ -385,7 +385,7 @@ class CommandLineController implements IController
                         case Terminator:
                             break;
                         case Frame(isCurrent, number, className, functionName,
-                                   fileName, lineNumber, next):
+                                   fileName, lineNumber, columnNumber, next):
                             Sys.print((isCurrent ? "* " : "  "));
                             Sys.print(padStringRight(Std.string(number), 5));
                             Sys.print(" : " + className + "." + functionName +
@@ -405,7 +405,7 @@ class CommandLineController implements IController
         case Variables(list):
             printStringList(list, "\n");
             Sys.println("");
-            
+
         case Value(expression, type, value):
             Sys.println(expression + " : " + type + " = " + value);
 
@@ -422,13 +422,13 @@ class CommandLineController implements IController
             // Don't print anything
 
         case ThreadStopped(number, frameNumber, className, functionName,
-                           fileName, lineNumber):
+                           fileName, lineNumber, columnNumber):
             Sys.println("\nThread " + number + " stopped in " +
                         className + "." + functionName + "() at " +
-                        fileName + ":" + lineNumber + ".");
+                        fileName + ":" + lineNumber + ":" + columnNumber + ".");
         }
     }
-    
+
     private function exit(regex : EReg) : Null<Command>
     {
         Sys.println("Exiting.");
@@ -519,7 +519,7 @@ class CommandLineController implements IController
 
     private function history_from(regex : EReg) : Null<Command>
     {
-        this.historyRange(Std.parseInt(regex.matched(1)), 
+        this.historyRange(Std.parseInt(regex.matched(1)),
                            mStoredCommands.length - 1);
         return null;
     }
@@ -611,11 +611,11 @@ class CommandLineController implements IController
     {
         return BreakNow;
     }
-
+    //CS116 - changed 0 to 1
     private function break_file_line(regex : EReg) : Null<Command>
     {
-        return AddFileLineBreakpoint(regex.matched(2), 
-                                     Std.parseInt(regex.matched(3)));
+        return AddFileLineBreakpoint(regex.matched(2),
+                                     Std.parseInt(regex.matched(3)), Std.parseInt(regex.matched(4)));
     }
 
     private function break_class_function(regex : EReg) : Null<Command>
@@ -638,7 +638,7 @@ class CommandLineController implements IController
         index = findSlash(value, 1);
 
         if (index == -1) {
-            Sys.println("Invalid command.");
+            Sys.println("Invalid command./641");
             return null;
         }
 
@@ -654,14 +654,14 @@ class CommandLineController implements IController
         var index = findSlash(value, 1);
 
         if (index == -1) {
-            Sys.println("Invalid command.");
+            Sys.println("Invalid command./657");
             return null;
         }
 
         var className = value.substr(0, index + 1);
 
         value = value.substr(index + 1);
-        
+
         var regex = ~/[\s]*\.[\s]*([a-zA-Z_][a-zA-Z0-9_]*)[\s]*$/;
         if (regex.match(value)) {
             return AddClassFunctionBreakpoint(className, regex.matched(1));
@@ -675,7 +675,7 @@ class CommandLineController implements IController
             var index = findSlash(value, 1);
 
             if (index == -1) {
-                Sys.println("Invalid command.");
+                Sys.println("Invalid command./678");
                 return null;
             }
 
@@ -683,7 +683,7 @@ class CommandLineController implements IController
                 (className, value.substr(0, index + 1));
         }
         else {
-            Sys.println("Invalid command.");
+            Sys.println("Invalid command./686");
             return null;
         }
     }
@@ -762,7 +762,7 @@ class CommandLineController implements IController
     private function clear_file_line(regex : EReg) : Null<Command>
     {
         return DeleteFileLineBreakpoint(regex.matched(1),
-                                        Std.parseInt(regex.matched(2)));
+                                        Std.parseInt(regex.matched(2)), 0);
     }
 
     private function continue_current(regex : EReg) : Null<Command>
@@ -945,7 +945,7 @@ class CommandLineController implements IController
             }
             index += 1;
         }
-        
+
         return -1;
     }
 
@@ -953,7 +953,7 @@ class CommandLineController implements IController
     {
         while (index < str.length) {
             var char = str.charAt(index);
-            if ((char == "/") && 
+            if ((char == "/") &&
                 ((index == 0) || (str.charAt(index - 1) != "\\"))) {
                 return index;
             }
@@ -1023,7 +1023,7 @@ class CommandLineController implements IController
   { r: ~/^unsafe[\s]*$/, h: unsafe },
   { r: ~/^safe[\s]*$/, h: safe },
   { r: ~/^(b|break)[\s]*$/, h : break_now },
-  { r: ~/^(b|break)[\s]+([^:]+):[\s]*([0-9]+)[\s]*$/, h : break_file_line },
+  { r: ~/^(b|break)[\s]+([^:]+):[\s]*([0-9]+):[\s]*([0-9]+)[\s]*$/, h : break_file_line },
   { r: ~/^(b|break)[\s]+(([a-zA-Z0-9_]+\.)+[a-zA-Z0-9_]+)[\s]*$/, h : break_class_function },
   { r: ~/^(b|break)[\s]+(([a-zA-Z0-9_]+\.)+\/.*)$/, h : break_class_regexp },
   { r: ~/^(b|break)[\s]+(\/.*)$/, h : break_possible_regexps },
@@ -1163,8 +1163,8 @@ class CommandLineController implements IController
  l : "Syntax: mem\n\n" +
      "The mem command displays the amount of bytes currently used by the\n" +
      "debugged process." },
-           
-         { c : "compact",   s : "Compacts the heap", 
+
+         { c : "compact",   s : "Compacts the heap",
  l : "Syntax: compact\n\n" +
      "The compact command compacts the program's heap as much as possible\n" +
      "and prints out the number of bytes used by the program before and\n" +
@@ -1226,8 +1226,8 @@ class CommandLineController implements IController
      "  b /.*/.new\n" +
      "      Sets a breakpoint on entry to the constructor of every class.\n\n" +
      "  b /.*/./.*/\n" +
-     "      Sets a breakpoint on entry to every function of every class." }, 
-     
+     "      Sets a breakpoint on entry to every function of every class." },
+
          { c : "list",     s : "Lists breakpoints",
  l : "Syntax: list/l [all/enabled/en/disabled/dis] breakpoints/b\n\n" +
      "The list (or l) command lists all breakpoints that match the given\n" +
@@ -1424,7 +1424,7 @@ class CommandLineController implements IController
        "  $.baz : Array<Int>[4] = [ 1, 2, 3, 4 ]\n" +
        "  $.foo : Int = 1\n\n" +
        "  9> set someValue.arr = $.baz\n\n" +
-       "  someValue.arr : Array<Int>[4] = [ 1, 2, 3, 4 ]" } 
+       "  someValue.arr : Array<Int>[4] = [ 1, 2, 3, 4 ]" }
          ];
 }
 

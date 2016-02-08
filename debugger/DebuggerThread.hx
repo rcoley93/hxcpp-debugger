@@ -177,9 +177,10 @@ class DebuggerThread
 
                 case SetCurrentThread(number):
                     emit(this.setCurrentThread(number));
+
                 // CS116 Modify to include column
-                case AddFileLineBreakpoint(fileName, lineNumber):
-                    emit(this.addFileLineBreakpoint(fileName, lineNumber));
+                case AddFileLineBreakpoint(fileName, lineNumber, columnNumber):
+                    emit(this.addFileLineBreakpoint(fileName, lineNumber,columnNumber));
 
                 case AddClassFunctionBreakpoint(className, functionName):
                     emit(this.addClassFunctionBreakpoint
@@ -209,8 +210,8 @@ class DebuggerThread
                 case DeleteBreakpointRange(first, last):
                     emit(this.deleteBreakpointRange(first, last));
 
-                case DeleteFileLineBreakpoint(fileName, lineNumber):
-                    emit(this.deleteFileLineBreakpoint(fileName, lineNumber));
+                case DeleteFileLineBreakpoint(fileName, lineNumber, columnNumber):
+                    emit(this.deleteFileLineBreakpoint(fileName, lineNumber, columnNumber));
 
                 case BreakNow:
                     emit(this.breakNow());
@@ -281,7 +282,9 @@ class DebuggerThread
                                        stackFrame : Int,
                                        className : String,
                                        functionName : String,
-                                       fileName : String, lineNumber : Int)
+                                       fileName : String,
+                                       lineNumber : Int, columnNumber: Int
+                                       )
     {
         switch (event) {
         case Debugger.THREAD_CREATED:
@@ -307,7 +310,7 @@ class DebuggerThread
             }
             mStateMutex.release();
             emit(ThreadStopped(threadNumber, stackFrame, className,
-                               functionName, fileName, lineNumber));
+                               functionName, fileName, lineNumber, columnNumber));
         }
     }
 
@@ -457,7 +460,7 @@ class DebuggerThread
                 var frame = ti.stack[frameNumber];
                 return ThreadLocation(number, frameNumber, frame.className,
                                       frame.functionName, frame.fileName,
-                                      frame.lineNumber);
+                                      frame.lineNumber, frame.columnNumber);
             }
         }
 
@@ -466,9 +469,10 @@ class DebuggerThread
 
     // CS116
     private function addFileLineBreakpoint(fileName : String,
-                                           lineNumber : Int) : Message
+                                           lineNumber : Int, columnNumber : Int) : Message
     {
-        var desc = (fileName + ":" + lineNumber);
+        var desc = (fileName + ":" + lineNumber + ":" + columnNumber);
+        trace(desc);
 
         if (!mBreakpointsByDescription.exists(desc)) {
             var files = Debugger.getFiles();
@@ -478,7 +482,7 @@ class DebuggerThread
                         new Breakpoint(mNextBreakpointNumber++, desc);
                     mBreakpoints.set(breakpoint.number, breakpoint);
                     mBreakpointsByDescription.set(desc, breakpoint);
-                    breakpoint.addFileLine(fileName, lineNumber);
+                    breakpoint.addFileLine(fileName, lineNumber, columnNumber);
                     break;
                 }
             }
@@ -660,9 +664,9 @@ class DebuggerThread
 
         for (b in breakpoint.bps()) {
             switch (b) {
-            case BP.FileLine(bp, fileName, lineNumber):
+            case BP.FileLine(bp, fileName, lineNumber, columnNumber):
                 list = BreakpointLocationList.FileLine
-                    (fileName, lineNumber, list);
+                    (fileName, lineNumber, columnNumber, list);
             case BP.ClassFunction(bp, className, functionName):
                 list = BreakpointLocationList.ClassFunction
                     (className, functionName, list);
@@ -738,7 +742,7 @@ class DebuggerThread
 
     // CS116
     private function deleteFileLineBreakpoint(fileName : String,
-                                              lineNumber : Int) : Message
+                                              lineNumber : Int, columnNumber: Int) : Message
     {
         var list : BreakpointStatusList = Terminator;
 
@@ -862,7 +866,7 @@ class DebuggerThread
                 list = Frame(((threadInfo.number == mCurrentThreadNumber) &&
                               (frameNumber == mCurrentStackFrame)),
                              frameNumber, sf.className, sf.functionName,
-                             sf.fileName, sf.lineNumber, list);
+                             sf.fileName, sf.lineNumber, sf.columnNumber, list);
                 frameNumber += 1;
             }
         }
@@ -916,7 +920,7 @@ class DebuggerThread
 
         return ThreadLocation(mCurrentThreadNumber, mCurrentStackFrame,
                               frame.className, frame.functionName,
-                              frame.fileName, frame.lineNumber);
+                              frame.fileName, frame.lineNumber, frame.columnNumber);
     }
 
     // CS116
@@ -950,7 +954,7 @@ class DebuggerThread
 
         return ThreadLocation(mCurrentThreadNumber, mCurrentStackFrame,
                               frame.className, frame.functionName,
-                              frame.fileName, frame.lineNumber);
+                              frame.fileName, frame.lineNumber, frame.columnNumber);
     }
 
     // CS116
@@ -985,7 +989,7 @@ class DebuggerThread
 
         return ThreadLocation(mCurrentThreadNumber, mCurrentStackFrame,
                               frame.className, frame.functionName,
-                              frame.fileName, frame.lineNumber);
+                              frame.fileName, frame.lineNumber, frame.columnNumber);
     }
 
     private function variables(unsafe : Bool) : Message
@@ -1165,7 +1169,7 @@ class DebuggerThread
         for (breakpoint in mBreakpoints) {
             for (bp in breakpoint.bps()) {
                 switch (bp) {
-                case FileLine(bp, fileName, lineNumber):
+                case FileLine(bp, fileName, lineNumber, columnNumber):
                     if (bp == bpNumber) {
                         return breakpoint.number;
                     }
@@ -1698,7 +1702,7 @@ private class DebuggerVariables
 
 private enum BP
 {
-    FileLine(bp : Int, fileName : String, lineNumber : Int);
+    FileLine(bp : Int, fileName : String, lineNumber : Int, columnNumber : Int);
     ClassFunction(bp : Int, className : String, functionName : String);
 }
 
@@ -1722,7 +1726,7 @@ private class Breakpoint
     {
         for (b in mBps) {
             switch (b) {
-            case BP.FileLine(bp, fileName, lineNumber):
+            case BP.FileLine(bp, fileName, lineNumber, columnNumber):
                 Debugger.deleteBreakpoint(bp);
             case BP.ClassFunction(bp, className, functionName):
                 Debugger.deleteBreakpoint(bp);
@@ -1730,10 +1734,10 @@ private class Breakpoint
         }
     }
 
-    public function addFileLine(fileName : String, lineNumber : Int)
+    public function addFileLine(fileName : String, lineNumber : Int, columnNumber : Int)
     {
         mBps.push(BP.FileLine(Debugger.addFileLineBreakpoint
-                              (fileName, lineNumber), fileName, lineNumber));
+                              (fileName, lineNumber, columnNumber), fileName, lineNumber, columnNumber));
     }
 
     public function addClassFunction(className : String, functionName : String)
@@ -1764,8 +1768,8 @@ private class Breakpoint
 
         for (b in oldBps) {
             switch (b) {
-            case BP.FileLine(bp, fileName, lineNumber):
-                this.addFileLine(fileName, lineNumber);
+            case BP.FileLine(bp, fileName, lineNumber, columnNumber):
+                this.addFileLine(fileName, lineNumber, columnNumber);
             case BP.ClassFunction(bp, className, functionName):
                 this.addClassFunction(className, functionName);
             }
@@ -1782,7 +1786,7 @@ private class Breakpoint
 
         for (b in mBps) {
             switch (b) {
-            case BP.FileLine(bp, fileName, lineNumber):
+            case BP.FileLine(bp, fileName, lineNumber, columnNumber):
                 Debugger.deleteBreakpoint(bp);
             case BP.ClassFunction(bp, className, functionName):
                 Debugger.deleteBreakpoint(bp);
